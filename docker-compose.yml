@@ -1,0 +1,23 @@
+services:
+  glance:
+    container_name: glance
+    image: glanceapp/glance
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+      - ./assets:/app/assets
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 8080:8080
+    env_file: .env
+
+  whatsupdocker:
+    image: getwud/wud
+    container_name: wud
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 3000:3000
+    environment:  
+      - WUD_WATCHER_LOCAL_WATCHALL=true
+
