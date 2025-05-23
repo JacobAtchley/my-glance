@@ -8,8 +8,10 @@ services:
       - ./assets:/app/assets
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - 8080:8080
-    env_file: .env
+      - 8089:8080
+    env_file: 
+      - .env
+      - secrets.env
 
   whatsupdocker:
     image: getwud/wud

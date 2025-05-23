@@ -61,6 +61,58 @@
             - type: repository
               repository: firebend/json-patch-generator
               title: JSON Patch Generator
+            - type: custom-api
+              title: Azure DevOps Open Pull Requests
+              cache: 5m
+              template: |
+                {{ $repos := newRequest "https://dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_apis/git/repositories?api-version=7.0"
+                    | withHeader "Authorization" "Basic ${AZURE_PAT_B64}" 
+                    | getResponse 
+                }}
+                {{ if eq $repos.Response.StatusCode 200 }}
+                  {{ range $repo := $repos.JSON.Array "value" }}
+
+                    {{ $repoId := $repo.String "id" }}
+                    {{ $repoName := $repo.String "name" }}
+                    {{ $repoUrl := $repo.String "url" }}
+                    {{ $project := $repo.String "project.name" }}
+
+                    {{ $prs := newRequest (concat $repoUrl "/pullrequests?searchCriteria.status=active&api-version=7.0") 
+                        | withHeader "Authorization" "Basic ${AZURE_PAT_B64}"
+                        | getResponse 
+                    }}
+
+                    {{ if eq $prs.Response.StatusCode 200 }}
+                      {{ $prCount := $prs.JSON.Int "count" }}
+                      {{ if gt $prCount 0 }}
+                        <div class="size-h3"><strong>{{ $repoName }} ({{ $prCount }} open PR{{ if ne $prCount 1 }}s{{ end }})</strong></div>
+                        <ul>
+                          {{ range $pr := $prs.JSON.Array "value" }}
+
+                            {{ $prId := $pr.String "pullRequestId" }}
+                            {{ $prStatus := $pr.String "status" }}
+                            {{ $prTitle := $pr.String "title" }}
+                            {{ $prCreatedBy := $pr.String "createdBy.displayName" }}
+                            {{ $prCreationDate := $pr.String "creationDate" | parseTime "rfc3339" | toRelativeTime }}
+                            {{ $prRepoName := $pr.String "repository.name" }}
+                            {{ $prProjectName := $pr.String "repository.project.name" }}
+                            {{ $prWebUrl := (concat "https://dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_git/" $prRepoName "/pullrequest/" $prId) }}
+
+                            <li>
+                              <a href="{{ $prWebUrl }}"> <strong> {{ $prTitle }} </strong> </a> <br/>
+                              Created by: {{ $prCreatedBy }} <br/>
+                              Created on: {{ $prCreationDate }} <br/>
+                            </li>
+                            <br/>
+                          {{ end }}
+                        </ul>
+                        <br/>
+                      {{ end }}
+                    {{ else }}
+                    {{ end }}
+                  {{ end }}
+                {{ else }}
+                {{ end }}
 
         - type: group
           widgets:
