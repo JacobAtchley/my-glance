@@ -101,7 +101,7 @@
                             <li>
                               <a href="{{ $prWebUrl }}"> <strong> {{ $prTitle }} </strong> </a> <br/>
                               Created by: {{ $prCreatedBy }} <br/>
-                              Created on: {{ $prCreationDate }} <br/>
+                              Created on: <span {{ .String "creationDate" | parseTime "rfc3339" | toRelativeTime }}></span> <br/>
                             </li>
                             <br/>
                           {{ end }}
